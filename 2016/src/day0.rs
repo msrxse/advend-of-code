@@ -1,4 +1,4 @@
-const INPUT: &str = include_str!("0.txt");
+const INPUT: &str = include_str!("1.txt");
 
 pub fn part1() -> String {
     part1_inner(INPUT)
