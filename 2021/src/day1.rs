@@ -25,23 +25,49 @@ pub fn part2() -> String {
 }
 
 pub fn part2_inner(input: &str) -> String {
+    // start with an input which is a bunch of characters
     input
+        // split it into an iterator of lines
         .lines()
-        .collect::<Vec<&str>>()
+        // remove any spaces at the front/back of each line
+        .map(str::trim)
+        // convert each line from a string to a number
+        .map(|line| line.parse::<i64>().unwrap())
+        // store all the numbers in a vector
+        .collect::<Vec<i64>>()
+        // apply a windowing function of size 3
         .windows(3)
-        .fold((0, None), |(mut n, prev), lines| {
-            let depth = lines
-                .iter()
-                .fold(0, |sum, line| sum + line.trim().parse::<i64>().unwrap());
-            if let Some(prev) = prev {
-                if depth > prev {
-                    n += 1;
-                }
-            }
-            (n, Some(depth))
-        })
-        .0
+        // for each triple, add them up
+        .map(|depths| depths.iter().sum())
+        // store the sums in a vector
+        .collect::<Vec<i64>>()
+        // apply a windowing function of 2
+        .windows(2)
+        // keep only groups where the second number is greater than the first
+        .filter(|depths| depths[1] > depths[0])
+        // count them
+        .count()
+        // convert to answer to a string
         .to_string()
+
+    // another way below !!
+    // input
+    //     .lines()
+    //     .collect::<Vec<&str>>()
+    //     .windows(3)
+    //     .fold((0, None), |(mut n, prev), lines| {
+    //         let depth = lines
+    //             .iter()
+    //             .fold(0, |sum, line| sum + line.trim().parse::<i64>().unwrap());
+    //         if let Some(prev) = prev {
+    //             if depth > prev {
+    //                 n += 1;
+    //             }
+    //         }
+    //         (n, Some(depth))
+    //     })
+    //     .0
+    //     .to_string()
 }
 
 #[test]
