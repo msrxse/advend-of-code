@@ -1,4 +1,4 @@
-const INPUT: &str = include_str!("1.txt");
+const INPUT: &str = include_str!("2.txt");
 const KEYPAD1: [[char; 3]; 3] = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']];
 const KEYPAD2: [[char; 5]; 5] = [
     ['X', 'X', '1', 'X', 'X'],

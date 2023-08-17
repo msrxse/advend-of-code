@@ -4,7 +4,7 @@ pub fn part1() -> String {
     part1_inner(INPUT)
 }
 
-pub fn part1_inner(input: &str) -> String {
+pub fn part1_inner(_input: &str) -> String {
     "12345".to_owned()
 }
 
@@ -12,7 +12,7 @@ pub fn part2() -> String {
     part2_inner(INPUT)
 }
 
-pub fn part2_inner(input: &str) -> String {
+pub fn part2_inner(_input: &str) -> String {
     "12345".to_owned()
 }
 
