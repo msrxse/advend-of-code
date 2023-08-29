@@ -79,8 +79,7 @@ fn number_filter(numbers: &mut Vec<Vec<bool>>, pos: usize, criteria: fn(usize, u
         .iter()
         .fold(0, |n, number| if number[pos] { n + 1 } else { n });
     let bit = criteria(num_ones, numbers.len());
-    //  numbers.retain(f)
-    todo!()
+    numbers.retain(|number| number[pos] == bit);
 }
 
 #[test]
@@ -107,7 +106,7 @@ fn test_part1() {
 #[test]
 fn test_part2() {
     assert_eq!(
-        "198",
+        "230",
         part2_inner(
             "00100
             11110
