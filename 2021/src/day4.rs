@@ -1,12 +1,57 @@
 use core::panic;
 
 const INPUT: &str = include_str!("4.txt");
+const BINGO_BOARD_SIZE: usize = 5;
 
-pub fn part1() -> String {
-    part1_inner(INPUT)
+type Cell = (i32, bool);
+type Row = [Cell; BINGO_BOARD_SIZE];
+type Board = [Row; BINGO_BOARD_SIZE];
+type Boards = Vec<Board>;
+
+fn check_bingo(board: &[Row]) -> bool {
+    for n in 0..BINGO_BOARD_SIZE {
+        let mut r = 0;
+        let mut c = 0;
+        for m in 0..BINGO_BOARD_SIZE {
+            if board[n][m].1 {
+                r += 1
+            }
+            if board[m][n].1 {
+                c += 1
+            }
+        }
+        if r == BINGO_BOARD_SIZE || c == BINGO_BOARD_SIZE {
+            return true;
+        }
+    }
+    false
 }
 
-pub fn part1_inner(input: &str) -> String {
+struct LineIterator<'a, Lines: Iterator<Item = &'a str>> {
+    lines: Lines,
+}
+
+impl<'a, Lines: Iterator<Item = &'a str>> LineIterator<'a, Lines> {
+    fn new(lines: Lines) -> Self {
+        Self { lines }
+    }
+}
+
+impl<'a, Lines: Iterator<Item = &'a str>> Iterator for LineIterator<'a, Lines> {
+    type Item = Board;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some([
+            make_row(self.lines.next()?),
+            make_row(self.lines.next().unwrap()),
+            make_row(self.lines.next().unwrap()),
+            make_row(self.lines.next().unwrap()),
+            make_row(self.lines.next().unwrap()),
+        ])
+    }
+}
+
+fn parse_bingo_games(input: &str) -> (Vec<i32>, Boards) {
     let mut lines = input.lines();
     let draws = lines
         .next()
@@ -15,33 +60,27 @@ pub fn part1_inner(input: &str) -> String {
         .map(|num| num.trim().parse::<i32>().unwrap())
         .collect::<Vec<_>>();
     let mut boards = Vec::new();
-    let mut next_board = Vec::new();
-    for line in lines {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        next_board.push(
-            line.split_ascii_whitespace()
-                .map(|num| (num.trim().parse::<i32>().unwrap(), false))
-                .collect::<Vec<_>>(),
-        );
-        if next_board.len() == 5 {
-            boards.push(next_board);
-            next_board = Vec::new();
-        }
-    }
-    for draw in draws {
-        for board in &mut boards {
-            if let Some(score) = play(board, draw) {
-                return (draw * score).to_string();
-            }
-        }
-    }
-    panic!("no winner");
+    boards.extend(LineIterator::new(
+        lines.map(str::trim).filter(|line| !line.is_empty()),
+    ));
+
+    (draws, boards)
 }
 
-fn play(board: &mut Vec<Vec<(i32, bool)>>, draw: i32) -> Option<i32> {
+fn make_row(line: &str) -> Row {
+    let mut cells = line
+        .split_ascii_whitespace()
+        .map(|num| (num.trim().parse::<i32>().unwrap(), false));
+    [
+        cells.next().unwrap(),
+        cells.next().unwrap(),
+        cells.next().unwrap(),
+        cells.next().unwrap(),
+        cells.next().unwrap(),
+    ]
+}
+
+fn play(board: &mut Board, draw: i32) -> Option<i32> {
     let mut found = false;
     for row in board.iter_mut() {
         for cell in row {
@@ -54,21 +93,8 @@ fn play(board: &mut Vec<Vec<(i32, bool)>>, draw: i32) -> Option<i32> {
     if !found {
         return None;
     }
-    if board.iter().any(|row| row.iter().all(|cell| cell.1))
-        || board
-            .iter()
-            .fold([0; 5], |mut matches, row| {
-                for (count, cell) in matches.iter_mut().zip(row.iter()) {
-                    if cell.1 {
-                        *count += 1;
-                    }
-                }
-                matches
-            })
-            .iter()
-            .any(|col| *col == 5)
-    {
-        Some(board.iter().fold(0, |score, row| {
+    check_bingo(board).then(|| {
+        board.iter().fold(0, |score, row| {
             row.iter().fold(
                 score,
                 |score, cell| {
@@ -79,10 +105,24 @@ fn play(board: &mut Vec<Vec<(i32, bool)>>, draw: i32) -> Option<i32> {
                     }
                 },
             )
-        }))
-    } else {
-        None
+        })
+    })
+}
+
+pub fn part1() -> String {
+    part1_inner(INPUT)
+}
+
+pub fn part1_inner(input: &str) -> String {
+    let (draws, mut boards) = parse_bingo_games(input);
+    for draw in draws {
+        for board in &mut boards {
+            if let Some(score) = play(board, draw) {
+                return (draw * score).to_string();
+            }
+        }
     }
+    panic!("no winner");
 }
 
 pub fn part2() -> String {
@@ -90,30 +130,7 @@ pub fn part2() -> String {
 }
 
 pub fn part2_inner(input: &str) -> String {
-    let mut lines = input.lines();
-    let draws = lines
-        .next()
-        .unwrap()
-        .split(',')
-        .map(|num| num.trim().parse::<i32>().unwrap())
-        .collect::<Vec<_>>();
-    let mut boards = Vec::new();
-    let mut next_board = Vec::new();
-    for line in lines {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        next_board.push(
-            line.split_ascii_whitespace()
-                .map(|num| (num.trim().parse::<i32>().unwrap(), false))
-                .collect::<Vec<_>>(),
-        );
-        if next_board.len() == 5 {
-            boards.push(next_board);
-            next_board = Vec::new();
-        }
-    }
+    let (draws, mut boards) = parse_bingo_games(input);
     let mut final_score = None;
     for draw in draws {
         boards = boards
