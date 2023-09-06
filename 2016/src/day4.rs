@@ -1,6 +1,22 @@
 use std::collections::HashMap;
 
 const INPUT: &str = include_str!("4.txt");
+const CHECKSUM_LENGTH: usize = 5;
+
+fn decrypt(parts: &[&str], id: u32) -> String {
+    let parts = parts
+        .iter()
+        .map(|part| {
+            part.chars()
+                .map(|c| {
+                    ((((c as u32 - 'a' as u32) + id) % ('z' as u32 - 'a' as u32 + 1)) + 'a' as u32)
+                        as u8 as char
+                })
+                .collect::<String>()
+        })
+        .collect::<Vec<_>>();
+    parts[..].join(" ")
+}
 
 pub fn part1() -> String {
     part1_inner(INPUT)
@@ -25,7 +41,7 @@ pub fn part1_inner(input: &str) -> String {
             });
             let check = freq
                 .into_iter()
-                .take(5)
+                .take(CHECKSUM_LENGTH)
                 .map(|(c, _f)| c)
                 .collect::<String>();
 
@@ -45,7 +61,32 @@ pub fn part2() -> String {
 }
 
 pub fn part2_inner(input: &str) -> String {
-    "12345".to_owned()
+    for line in input.lines() {
+        let (first, last) = line.trim().split_once('[').unwrap();
+        let mut parts = first.split('-').collect::<Vec<_>>();
+        let id = parts.pop().unwrap().parse::<u32>().unwrap();
+        let mut freq = HashMap::new();
+        for c in parts.iter().flat_map(|part| part.chars()) {
+            *freq.entry(c).or_insert(0) += 1;
+        }
+        let mut freq = freq.into_iter().collect::<Vec<_>>();
+        freq.sort_unstable_by(|a, b| match b.1.cmp(&a.1) {
+            std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+            std::cmp::Ordering::Equal => a.0.cmp(&b.0),
+            std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+        });
+        let check = freq
+            .into_iter()
+            .take(5)
+            .map(|(c, _f)| c)
+            .collect::<String>();
+
+        let last = last.strip_suffix(']').unwrap();
+        if last == check && decrypt(&parts, id).contains("north") {
+            return id.to_string();
+        }
+    }
+    panic!("Can't find the room");
 }
 
 #[test]
@@ -63,5 +104,8 @@ fn test_part1() {
 
 #[test]
 fn test_part2() {
-    assert_eq!("2", part2_inner("5"));
+    assert_eq!(
+        "very encrypted name".to_string(),
+        decrypt(&vec!["qzmt", "zixmtkozy", "ivhz"], 343)
+    );
 }
